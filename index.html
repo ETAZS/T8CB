@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏆 Générateur de Top 8</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #581c87 0%, #1e3a8a 50%, #000000 100%);
+      min-height: 100vh;
+      color: white;
+    }
+  </style>
+</head>
+<body class="p-6">
+  <div class="max-w-7xl mx-auto">
+    <h1 class="text-5xl font-bold text-center mb-6 bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-pink-500">
+      🏆 Générateur de Top 8
+    </h1>
+    
+    <div class="flex justify-center gap-4 mb-4">
+      <button onclick="switchSection('cb')" id="btn-cb" class="px-8 py-3 rounded-lg font-bold text-lg bg-gradient-to-r from-purple-600 to-pink-600 ring-2 ring-yellow-400">
+        🎮 CB
+      </button>
+      <button onclick="switchSection('top8')" id="btn-top8" class="px-8 py-3 rounded-lg font-bold text-lg bg-white/20">
+        👑 Top 8 (Solo)
+      </button>
+    </div>
+
+    <div class="flex justify-center gap-3 mb-8">
+      <button onclick="showDeleteModal()" class="px-4 py-2 bg-red-600/30 hover:bg-red-600/50 rounded-lg text-sm">
+        🗑️ Tout supprimer
+      </button>
+      <div class="px-4 py-2 bg-green-600/30 rounded-lg text-sm">💾 Sauvegarde auto</div>
+    </div>
+
+    <!-- Modal de suppression -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div class="bg-gradient-to-br from-purple-900 to-blue-900 p-8 rounded-xl max-w-md border-2 border-red-500">
+        <h3 class="text-2xl font-bold mb-4">⚠️ Confirmation</h3>
+        <p class="mb-6">Supprimer toutes les données ?</p>
+        <div class="flex gap-4">
+          <button onclick="clearData()" class="flex-1 bg-red-600 py-3 rounded-lg font-bold">Oui</button>
+          <button onclick="hideDeleteModal()" class="flex-1 bg-white/20 py-3 rounded-lg font-bold">Non</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section CB -->
+    <div id="section-cb" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="space-y-6">
+        <!-- Infos -->
+        <div class="bg-white/10 backdrop-blur-md rounded-lg p-6">
+          <h2 class="text-2xl font-bold mb-4">📋 Infos</h2>
+          <div class="space-y-3">
+            <input type="text" id="tournamentName" placeholder="Tournoi" class="w-full bg-white/20 rounded px-4 py-2 text-white" value="CHAMPIONSHIP 2024">
+            <input type="text" id="tournamentDate" placeholder="Date" class="w-full bg-white/20 rounded px-4 py-2 text-white" value="15 Nov 2025">
+            
+            <div class="pt-3 border-t border-white/20">
+              <label class="block mb-2 text-sm font-bold text-yellow-400">🏆 Gagnants</label>
+              <input type="text" id="winnerTeam" class="w-full bg-white/20 rounded px-4 py-2 text-white mb-2" value="TEAM WINNER">
+              <input type="file" id="winnerLogo" accept="image/*" class="w-full text-sm">
+            </div>
+            
+            <div class="pt-3 border-t border-white/20">
+              <label class="block mb-2 text-sm font-bold text-gray-400">⭐ Perdants</label>
+              <input type="text" id="loserTeam" class="w-full bg-white/20 rounded px-4 py-2 text-white mb-2" value="TEAM LOSER">
+              <input type="file" id="loserLogo" accept="image/*" class="w-full text-sm">
+            </div>
+          </div>
+        </div>
+
+        <!-- Fonds -->
+        <div class="bg-white/10 backdrop-blur-md rounded-lg p-6">
+          <h2 class="text-2xl font-bold mb-4">🎨 Fonds</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block mb-2 text-sm font-bold text-yellow-400">🏆 Fond Gagnants</label>
+              <div class="grid grid-cols-2 gap-2 mb-2" id="winnerBgPresets"></div>
+              <button onclick="setWinnerBgType('color')" class="w-full py-2 rounded mb-2 text-sm bg-white/20">Couleur perso</button>
+              <input type="color" id="winnerBgColor" class="w-full h-12 rounded hidden" value="#1a0033">
+              <input type="file" id="winnerBgImage" accept="image/*" class="w-full text-xs mt-2">
+            </div>
+            
+            <div class="border-t border-white/20 pt-4">
+              <label class="block mb-2 text-sm font-bold text-gray-400">⭐ Fond Perdants</label>
+              <div class="grid grid-cols-2 gap-2 mb-2" id="loserBgPresets"></div>
+              <button onclick="setLoserBgType('color')" class="w-full py-2 rounded mb-2 text-sm bg-white/20">Couleur perso</button>
+              <input type="color" id="loserBgColor" class="w-full h-12 rounded hidden" value="#1a0033">
+              <input type="file" id="loserBgImage" accept="image/*" class="w-full text-xs mt-2">
+            </div>
+          </div>
+        </div>
+
+        <!-- Joueurs -->
+        <div class="bg-white/10 backdrop-blur-md rounded-lg p-6">
+          <h2 class="text-2xl font-bold mb-4">👥 Joueurs</h2>
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-lg font-bold mb-3 text-yellow-400">🏆 Gagnants</h3>
+              <div id="winnerPlayers" class="space-y-4 max-h-64 overflow-y-auto"></div>
+            </div>
+            <div class="border-t border-white/20 pt-4">
+              <h3 class="text-lg font-bold mb-3 text-gray-400">⭐ Perdants</h3>
+              <div id="loserPlayers" class="space-y-4 max-h-64 overflow-y-auto"></div>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="downloadImage()" class="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 py-4 rounded-lg font-bold text-xl flex items-center justify-center gap-3">
+          <span>⬇️</span> Télécharger
+        </button>
+      </div>
+
+      <!-- Aperçu -->
+      <div class="bg-white/10 backdrop-blur-md rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-4">👁️ Aperçu</h2>
+        <canvas id="canvas" class="w-full h-auto bg-black rounded cursor-pointer" onclick="generateImage()"></canvas>
+        <p class="text-sm text-gray-400 mt-2 text-center">Clique pour actualiser</p>
+      </div>
+    </div>
+
+    <!-- Section Top 8 -->
+    <div id="section-top8" class="hidden flex flex-col items-center justify-center h-96 bg-white/10 backdrop-blur-md rounded-lg">
+      <div class="text-6xl mb-4">🚧</div>
+      <h2 class="text-3xl font-bold mb-2">En construction</h2>
+      <p class="text-gray-400">Le mode Top 8 Solo arrive bientôt !</p>
+    </div>
+  </div>
+
+  <script>
+    const BG = {
+      g1: { name: '🔷 Triangles', colors: ['#1a0033', '#4a0080', '#1a0033'] },
+      g2: { name: '🌊 Waves', colors: ['#001f3f', '#0074D9', '#001f3f'] },
+      g3: { name: '🔥 Hexagons', colors: ['#2c0735', '#e8115b', '#2c0735'] },
+      g4: { name: '🍃 Leaves', colors: ['#0a2f1f', '#28a745', '#0a2f1f'] },
+      g5: { name: '⭐ Rays', colors: ['#1f1200', '#ff9500', '#1f1200'] }
+    };
+
+    let state = {
+      winnerBgType: 'g1',
+      winnerBgColor: '#1a0033',
+      winnerBgImage: null,
+      loserBgType: 'g1',
+      loserBgColor: '#1a0033',
+      loserBgImage: null,
+      winnerLogo: null,
+      loserLogo: null,
+      players: [
+        { id: 1, p: 'Player1', h: 'Hero1', r: '', i: null, pos: 'left2', t: 'winner', ox: 0, oy: 0, s: 1 },
+        { id: 2, p: 'Player2', h: 'Hero2', r: '', i: null, pos: 'left1', t: 'winner', ox: 0, oy: 0, s: 1 },
+        { id: 3, p: 'MVP Win', h: 'Hero3', r: '', i: null, pos: 'center', t: 'winner', mvp: true, ox: 0, oy: 0, s: 1 },
+        { id: 4, p: 'Player4', h: 'Hero4', r: '', i: null, pos: 'right1', t: 'winner', ox: 0, oy: 0, s: 1 },
+        { id: 5, p: 'Player5', h: 'Hero5', r: '', i: null, pos: 'right2', t: 'winner', ox: 0, oy: 0, s: 1 },
+        { id: 6, p: 'Player6', h: 'Hero6', r: '', i: null, pos: 'left2', t: 'loser', ox: 0, oy: 0, s: 1 },
+        { id: 7, p: 'Player7', h: 'Hero7', r: '', i: null, pos: 'left1', t: 'loser', ox: 0, oy: 0, s: 1 },
+        { id: 8, p: 'MVP Lose', h: 'Hero8', r: '', i: null, pos: 'center', t: 'loser', mvp: true, ox: 0, oy: 0, s: 1 },
+        { id: 9, p: 'Player9', h: 'Hero9', r: '', i: null, pos: 'right1', t: 'loser', ox: 0, oy: 0, s: 1 },
+        { id: 10, p: 'Player10', h: 'Hero10', r: '', i: null, pos: 'right2', t: 'loser', ox: 0, oy: 0, s: 1 }
+      ]
+    };
+
+    function switchSection(section) {
+      document.getElementById('section-cb').classList.toggle('hidden', section !== 'cb');
+      document.getElementById('section-top8').classList.toggle('hidden', section !== 'top8');
+      document.getElementById('btn-cb').className = section === 'cb' 
+        ? 'px-8 py-3 rounded-lg font-bold text-lg bg-gradient-to-r from-purple-600 to-pink-600 ring-2 ring-yellow-400'
+        : 'px-8 py-3 rounded-lg font-bold text-lg bg-white/20';
+      document.getElementById('btn-top8').className = section === 'top8'
+        ? 'px-8 py-3 rounded-lg font-bold text-lg bg-gradient-to-r from-purple-600 to-pink-600 ring-2 ring-yellow-400'
+        : 'px-8 py-3 rounded-lg font-bold text-lg bg-white/20';
+    }
+
+    function showDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function hideDeleteModal() {
+      document.getElementById('deleteModal').classList.add('hidden');
+    }
+
+    function clearData() {
+      if (confirm('Êtes-vous vraiment sûr ?')) {
+        localStorage.removeItem('cb-data');
+        location.reload();
+      }
+    }
+
+    function setWinnerBgType(type) {
+      state.winnerBgType = type;
+      document.getElementById('winnerBgColor').classList.toggle('hidden', type !== 'color');
+      saveState();
+      generateImage();
+    }
+
+    function setLoserBgType(type) {
+      state.loserBgType = type;
+      document.getElementById('loserBgColor').classList.toggle('hidden', type !== 'color');
+      saveState();
+      generateImage();
+    }
+
+    function initBgPresets() {
+      const winnerContainer = document.getElementById('winnerBgPresets');
+      const loserContainer = document.getElementById('loserBgPresets');
+      
+      Object.entries(BG).forEach(([key, value]) => {
+        const winnerBtn = document.createElement('button');
+        winnerBtn.textContent = value.name;
+        winnerBtn.className = 'p-2 rounded text-xs bg-white/20';
+        winnerBtn.onclick = () => {
+          state.winnerBgType = key;
+          saveState();
+          generateImage();
+          updateBgButtons();
+        };
+        winnerContainer.appendChild(winnerBtn);
+
+        const loserBtn = document.createElement('button');
+        loserBtn.textContent = value.name;
+        loserBtn.className = 'p-2 rounded text-xs bg-white/20';
+        loserBtn.onclick = () => {
+          state.loserBgType = key;
+          saveState();
+          generateImage();
+          updateBgButtons();
+        };
+        loserContainer.appendChild(loserBtn);
+      });
+    }
+
+    function updateBgButtons() {
+      const winnerBtns = document.getElementById('winnerBgPresets').children;
+      const loserBtns = document.getElementById('loserBgPresets').children;
+      const keys = Object.keys(BG);
+      
+      for (let i = 0; i < keys.length; i++) {
+        winnerBtns[i].className = state.winnerBgType === keys[i] 
+          ? 'p-2 rounded text-xs bg-purple-600 ring-2 ring-yellow-400'
+          : 'p-2 rounded text-xs bg-white/20';
+        loserBtns[i].className = state.loserBgType === keys[i]
+          ? 'p-2 rounded text-xs bg-purple-600 ring-2 ring-gray-400'
+          : 'p-2 rounded text-xs bg-white/20';
+      }
+    }
+
+    function initPlayers() {
+      const winnerContainer = document.getElementById('winnerPlayers');
+      const loserContainer = document.getElementById('loserPlayers');
+      
+      winnerContainer.innerHTML = '';
+      loserContainer.innerHTML = '';
+
+      state.players.filter(p => p.t === 'winner').forEach(p => {
+        winnerContainer.appendChild(createPlayerCard(p));
+      });
+
+      state.players.filter(p => p.t === 'loser').forEach(p => {
+        loserContainer.appendChild(createPlayerCard(p));
+      });
+    }
+
+    function createPlayerCard(player) {
+      const div = document.createElement('div');
+      div.className = player.mvp 
+        ? (player.t === 'winner' ? 'p-3 rounded bg-yellow-600/30 border-2 border-yellow-400' : 'p-3 rounded bg-gray-600/30 border-2 border-gray-400')
+        : 'p-3 rounded bg-white/10';
+      
+      div.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+          <span class="font-bold text-sm">${player.mvp ? (player.t === 'winner' ? '🏆 MVP' : '⭐ MVP') : 'J' + player.id}</span>
+          <input type="file" accept="image/*" onchange="uploadPlayerImage(${player.id}, event)" class="text-xs">
+        </div>
+        <div class="space-y-2">
+          <input type="text" placeholder="Pseudo" value="${player.p}" onchange="updatePlayer(${player.id}, 'p', this.value)" class="w-full bg-white/20 rounded px-3 py-1 text-xs text-white">
+          <input type="text" placeholder="Héros" value="${player.h}" onchange="updatePlayer(${player.id}, 'h', this.value)" class="w-full bg-white/20 rounded px-3 py-1 text-xs text-white">
+          <input type="text" placeholder="Rôle" value="${player.r}" onchange="updatePlayer(${player.id}, 'r', this.value)" class="w-full bg-white/20 rounded px-3 py-1 text-xs text-white">
+          ${player.i ? `
+          <div class="space-y-2 mt-2 pt-2 border-t border-white/20">
+            <div class="flex items-center gap-1">
+              <button onclick="adjustPlayer(${player.id}, 'ox', -5)" class="px-2 py-1 bg-white/20 rounded text-xs">←</button>
+              <button onclick="adjustPlayer(${player.id}, 'ox', -1)" class="px-2 py-1 bg-white/20 rounded text-xs">‹</button>
+              <span class="flex-1 text-center text-xs">${player.ox}px</span>
+              <button onclick="adjustPlayer(${player.id}, 'ox', 1)" class="px-2 py-1 bg-white/20 rounded text-xs">›</button>
+              <button onclick="adjustPlayer(${player.id}, 'ox', 5)" class="px-2 py-1 bg-white/20 rounded text-xs">→</button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="adjustPlayer(${player.id}, 'oy', -5)" class="px-2 py-1 bg-white/20 rounded text-xs">↑</button>
+              <button onclick="adjustPlayer(${player.id}, 'oy', -1)" class="px-2 py-1 bg-white/20 rounded text-xs">ᐃ</button>
+              <span class="flex-1 text-center text-xs">${player.oy}px</span>
+              <button onclick="adjustPlayer(${player.id}, 'oy', 1)" class="px-2 py-1 bg-white/20 rounded text-xs">ᐁ</button>
+              <button onclick="adjustPlayer(${player.id}, 'oy', 5)" class="px-2 py-1 bg-white/20 rounded text-xs">↓</button>
+            </div>
+            <div>
+              <label class="text-xs text-gray-300">Zoom: ${player.s.toFixed(2)}x</label>
+              <input type="range" min="0.5" max="2" step="0.01" value="${player.s}" onchange="updatePlayer(${player.id}, 's', parseFloat(this.value))" class="w-full">
+            </div>
+          </div>
+          ` : ''}
+        </div>
+      `;
+      
+      return div;
+    }
+
+    function updatePlayer(id, key, value) {
+      const player = state.players.find(p => p.id === id);
+      if (player) {
+        player[key] = value;
+        saveState();
+        generateImage();
+        if (key === 'i') initPlayers();
+      }
+    }
+
+    function adjustPlayer(id, key, delta) {
+      const player = state.players.find(p => p.id === id);
+      if (player) {
+        player[key] += delta;
+        saveState();
+        generateImage();
+        initPlayers();
+      }
+    }
+
+    function uploadPlayerImage(id, event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          updatePlayer(id, 'i', e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function generateImage() {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 1920;
+      canvas.height = 2160;
+
+      const images = {};
+      const promises = [];
+
+      // Load all images
+      if (state.winnerBgType === 'image' && state.winnerBgImage) {
+        promises.push(loadImage(state.winnerBgImage).then(img => images.winnerBg = img));
+      }
+      if (state.loserBgType === 'image' && state.loserBgImage) {
+        promises.push(loadImage(state.loserBgImage).then(img => images.loserBg = img));
+      }
+      if (state.winnerLogo) {
+        promises.push(loadImage(state.winnerLogo).then(img => images.winnerLogo = img));
+      }
+      if (state.loserLogo) {
+        promises.push(loadImage(state.loserLogo).then(img => images.loserLogo = img));
+      }
+      state.players.forEach(p => {
+        if (p.i) {
+          promises.push(loadImage(p.i).then(img => images[`p${p.id}`] = img));
+        }
+      });
+
+      Promise.all(promises).then(() => {
+        drawCanvas(ctx, images);
+      });
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    function drawCanvas(ctx, images) {
+      // Winner background
+      if (state.winnerBgType === 'image' && images.winnerBg) {
+        ctx.drawImage(images.winnerBg, 0, 0, 1920, 1080);
+      } else if (state.winnerBgType === 'color') {
+        ctx.fillStyle = state.winnerBgColor;
+        ctx.fillRect(0, 0, 1920, 1080);
+      } else {
+        const preset = BG[state.winnerBgType];
+        const grad = ctx.createLinearGradient(0, 0, 1920, 1080);
+        grad.addColorStop(0, preset.colors[0]);
+        grad.addColorStop(0.5, preset.colors[1]);
+        grad.addColorStop(1, preset.colors[2]);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 1920, 1080);
+      }
+
+      // Loser background
+      if (state.loserBgType === 'image' && images.loserBg) {
+        ctx.drawImage(images.loserBg, 0, 1080, 1920, 1080);
+      } else if (state.loserBgType === 'color') {
+        ctx.fillStyle = state.loserBgColor;
+        ctx.fillRect(0, 1080, 1920, 1080);
+      } else {
+        const preset = BG[state.loserBgType];
+        const grad = ctx.createLinearGradient(0, 1080, 1920, 2160);
+        grad.addColorStop(0, preset.colors[0]);
+        grad.addColorStop(0.5, preset.colors[1]);
+        grad.addColorStop(1, preset.colors[2]);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 1080, 1920, 1080);
+      }
+
+      // Decorative triangles
+      ctx.globalAlpha = 0.15;
+      for (let i = 0; i < 40; i++) {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        const x = Math.random() * 1920;
+        const y = Math.random() * 2160;
+        const sz = Math.random() * 100 + 50;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + sz, y);
+        ctx.lineTo(x + sz/2, y + sz);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // Player positions
+      const wp = {
+        left2: {x:250, y:840, sc:0.85, z:1},
+        left1: {x:550, y:790, sc:1, z:2},
+        center: {x:960, y:740, sc:1.3, z:3},
+        right1: {x:1370, y:790, sc:1, z:2},
+        right2: {x:1670, y:840, sc:0.85, z:1}
+      };
+      const lp = {
+        left2: {x:250, y:1920, sc:0.85, z:1},
+        left1: {x:550, y:1870, sc:1, z:2},
+        center: {x:960, y:1820, sc:1.3, z:3},
+        right1: {x:1370, y:1870, sc:1, z:2},
+        right2: {x:1670, y:1920, sc:0.85, z:1}
+      };
+
+      // Draw players
+      state.players.filter(p => p.t === 'winner').sort((a,b) => wp[a.pos].z - wp[b.pos].z)
+        .forEach(p => drawPlayer(ctx, p, wp[p.pos], images, 160, '#FFD700', '🏆'));
+      state.players.filter(p => p.t === 'loser').sort((a,b) => lp[a.pos].z - lp[b.pos].z)
+        .forEach(p => drawPlayer(ctx, p, lp[p.pos], images, 1240, '#C0C0C0', '⭐'));
+
+      // Divider line
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#fff';
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.moveTo(0, 1080);
+      ctx.lineTo(1920, 1080);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Decorative circle
+      ctx.globalAlpha = 0.3;
+      for (let i = 0; i < 30; i++) {
+        const angle = (Math.PI * 2 / 30) * i;
+        const radius = 200 + Math.sin(i) * 50;
+        ctx.fillStyle = i % 2 === 0 ? '#f00' : '#ff0';
+        ctx.beginPath();
+        ctx.arc(960 + Math.cos(angle) * radius, 1080 + Math.sin(angle) * radius, 15, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // VS text
+      ctx.shadowColor = '#f00';
+      ctx.shadowBlur = 40;
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 120px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('VS', 960, 1100);
+      ctx.shadowBlur = 0;
+
+      // Tournament name
+      ctx.shadowColor = '#0ff';
+      ctx.shadowBlur = 25;
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 56px Arial';
+      ctx.fillText(document.getElementById('tournamentName').value, 960, 80);
+
+      // Date
+      ctx.shadowColor = '#f0f';
+      ctx.shadowBlur = 20;
+      ctx.font = '36px Arial';
+      ctx.fillStyle = '#fcf';
+      ctx.textAlign = 'left';
+      ctx.fillText(document.getElementById('tournamentDate').value, 50, 80);
+
+      // Winner team name
+      ctx.shadowColor = '#fc0';
+      ctx.shadowBlur = 30;
+      ctx.font = 'bold 64px Arial';
+      ctx.fillStyle = '#FFD700';
+      ctx.textAlign = 'center';
+      ctx.fillText(document.getElementById('winnerTeam').value, 960, 970);
+
+      // Winner logo
+      if (images.winnerLogo) {
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = 'rgba(255,215,0,0.6)';
+        ctx.drawImage(images.winnerLogo, 1740, 40, 180, 180);
+        ctx.shadowBlur = 0;
+      }
+
+      // Loser team name
+      ctx.shadowColor = '#aaa';
+      ctx.shadowBlur = 30;
+      ctx.font = 'bold 64px Arial';
+      ctx.fillStyle = '#C0C0C0';
+      ctx.fillText(document.getElementById('loserTeam').value, 960, 2050);
+
+      // Loser logo
+      if (images.loserLogo) {
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = 'rgba(192,192,192,0.6)';
+        ctx.drawImage(images.loserLogo, 1740, 1120, 180, 180);
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function drawPlayer(ctx, player, pos, images, limit, frameColor, mvpIcon) {
+      const h = 850 * pos.sc;
+      const w = 400 * pos.sc;
+
+      // Draw player image
+      if (player.i && images[`p${player.id}`]) {
+        const img = images[`p${player.id}`];
+        const ratio = img.width / img.height;
+        const dh = h * player.s;
+        const dw = dh * ratio;
+        const top = Math.max(pos.y - dh + player.oy, limit);
+        const clipHeight = Math.min(dh, pos.y - top);
+        const cornerRadius = 30;
+        const rectX = pos.x - w/2;
+        const rectY = top;
+
+        // Draw frame
+        ctx.strokeStyle = frameColor;
+        ctx.lineWidth = 5;
+        ctx.shadowColor = frameColor;
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.moveTo(rectX + cornerRadius, rectY);
+        ctx.lineTo(rectX + w - cornerRadius, rectY);
+        ctx.arcTo(rectX + w, rectY, rectX + w, rectY + cornerRadius, cornerRadius);
+        ctx.lineTo(rectX + w, rectY + clipHeight - cornerRadius);
+        ctx.arcTo(rectX + w, rectY + clipHeight, rectX + w - cornerRadius, rectY + clipHeight, cornerRadius);
+        ctx.lineTo(rectX + cornerRadius, rectY + clipHeight);
+        ctx.arcTo(rectX, rectY + clipHeight, rectX, rectY + clipHeight - cornerRadius, cornerRadius);
+        ctx.lineTo(rectX, rectY + cornerRadius);
+        ctx.arcTo(rectX, rectY, rectX + cornerRadius, rectY, cornerRadius);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Clip and draw image
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(rectX + cornerRadius, rectY);
+        ctx.lineTo(rectX + w - cornerRadius, rectY);
+        ctx.arcTo(rectX + w, rectY, rectX + w, rectY + cornerRadius, cornerRadius);
+        ctx.lineTo(rectX + w, rectY + clipHeight - cornerRadius);
+        ctx.arcTo(rectX + w, rectY + clipHeight, rectX + w - cornerRadius, rectY + clipHeight, cornerRadius);
+        ctx.lineTo(rectX + cornerRadius, rectY + clipHeight);
+        ctx.arcTo(rectX, rectY + clipHeight, rectX, rectY + clipHeight - cornerRadius, cornerRadius);
+        ctx.lineTo(rectX, rectY + cornerRadius);
+        ctx.arcTo(rectX, rectY, rectX + cornerRadius, rectY, cornerRadius);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, pos.x - dw/2 + player.ox, pos.y - dh + player.oy, dw, dh);
+        ctx.restore();
+      }
+
+      // Draw text
+      const textY = pos.y + 40;
+      const fontSize = 40 * pos.sc;
+      
+      ctx.shadowColor = '#0ff';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${fontSize}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText(player.p, pos.x, textY);
+      
+      ctx.shadowColor = '#f0f';
+      ctx.shadowBlur = 15;
+      ctx.font = `${fontSize * 0.7}px Arial`;
+      ctx.fillStyle = '#fcf';
+      ctx.fillText(player.h, pos.x, textY + 45);
+      
+      if (player.r) {
+        ctx.shadowColor = '#fc0';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#ffa';
+        ctx.fillText(player.r, pos.x, textY + 85);
+      }
+      
+      if (player.mvp) {
+        ctx.shadowColor = frameColor;
+        ctx.shadowBlur = 30;
+        ctx.fillStyle = frameColor;
+        ctx.font = 'bold 48px Arial';
+        ctx.fillText(mvpIcon, pos.x, Math.max(pos.y - h - 30, limit - 10));
+      }
+      
+      ctx.shadowBlur = 0;
+    }
+
+    function downloadImage() {
+      const canvas = document.getElementById('canvas');
+      const link = document.createElement('a');
+      const winnerTeam = document.getElementById('winnerTeam').value;
+      const loserTeam = document.getElementById('loserTeam').value;
+      link.download = `${winnerTeam}_VS_${loserTeam}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    function saveState() {
+      localStorage.setItem('cb-data', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('cb-data');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          state = { ...state, ...data };
+          
+          // Update form fields
+          document.getElementById('tournamentName').value = data.tournamentName || 'CHAMPIONSHIP 2024';
+          document.getElementById('tournamentDate').value = data.tournamentDate || '15 Nov 2025';
+          document.getElementById('winnerTeam').value = data.winnerTeam || 'TEAM WINNER';
+          document.getElementById('loserTeam').value = data.loserTeam || 'TEAM LOSER';
+          document.getElementById('winnerBgColor').value = data.winnerBgColor || '#1a0033';
+          document.getElementById('loserBgColor').value = data.loserBgColor || '#1a0033';
+        } catch (e) {
+          console.error('Error loading state:', e);
+        }
+      }
+    }
+
+    // Event listeners
+    document.getElementById('tournamentName').addEventListener('input', (e) => {
+      state.tournamentName = e.target.value;
+      saveState();
+      generateImage();
+    });
+
+    document.getElementById('tournamentDate').addEventListener('input', (e) => {
+      state.tournamentDate = e.target.value;
+      saveState();
+      generateImage();
+    });
+
+    document.getElementById('winnerTeam').addEventListener('input', (e) => {
+      state.winnerTeam = e.target.value;
+      saveState();
+      generateImage();
+    });
+
+    document.getElementById('loserTeam').addEventListener('input', (e) => {
+      state.loserTeam = e.target.value;
+      saveState();
+      generateImage();
+    });
+
+    document.getElementById('winnerBgColor').addEventListener('input', (e) => {
+      state.winnerBgColor = e.target.value;
+      saveState();
+      generateImage();
+    });
+
+    document.getElementById('loserBgColor').addEventListener('input', (e) => {
+      state.loserBgColor = e.target.value;
+      saveState();
+      generateImage();
+    });
+
+    document.getElementById('winnerBgImage').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          state.winnerBgImage = ev.target.result;
+          state.winnerBgType = 'image';
+          saveState();
+          generateImage();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('loserBgImage').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          state.loserBgImage = ev.target.result;
+          state.loserBgType = 'image';
+          saveState();
+          generateImage();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('winnerLogo').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          state.winnerLogo = ev.target.result;
+          saveState();
+          generateImage();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('loserLogo').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          state.loserLogo = ev.target.result;
+          saveState();
+          generateImage();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Initialize
+    loadState();
+    initBgPresets();
+    initPlayers();
+    updateBgButtons();
+    setTimeout(() => generateImage(), 100);
+  </script>
+</body>
+</html>
